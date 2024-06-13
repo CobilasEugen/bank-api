@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bank-api/db"
-	"bank-api/router"
+	"github.com/CobilasEugen/bank-api/db"
+	"github.com/CobilasEugen/bank-api/router"
 	"fmt"
 	"io"
 	"log"

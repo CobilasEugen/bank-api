@@ -1,7 +1,7 @@
 package router
 
 import (
-	"bank-api/db"
+	"github.com/CobilasEugen/bank-api/db"
 	"log"
 	"net/http"
 	"strings"

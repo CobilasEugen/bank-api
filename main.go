@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"bank-api/router"
+	"github.com/CobilasEugen/bank-api/router"
 )
 
 func main() {
