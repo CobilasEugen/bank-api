@@ -1,4 +1,4 @@
-module bank-api
+module github.com/CobilasEugen/bank-api
 
 go 1.22.4
 
