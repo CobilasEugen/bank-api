@@ -10,7 +10,10 @@ import (
 func (app *App) CreateUser() http.HandlerFunc {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		var user db.User
-		json.NewDecoder(r.Body).Decode(&user)
+		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+			http.Error(w, "Could not decode user data", http.StatusBadRequest)
+			return
+		}
 
 		user, err := app.Db.CreateUser(user.Name)
 		if err != nil {
@@ -19,7 +22,10 @@ func (app *App) CreateUser() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(user)
+		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+			http.Error(w, "Could not decode user data", http.StatusBadRequest)
+			return
+		}
 
 		log.Printf("created new user: %d", user.ID)
 	}
@@ -30,7 +36,10 @@ func (app *App) CreateUser() http.HandlerFunc {
 func (app *App) CreateAccount() http.HandlerFunc {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		var account db.Account
-		json.NewDecoder(r.Body).Decode(&account)
+		if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
+			http.Error(w, "Could not decode account data", http.StatusBadRequest)
+			return
+		}
 
 		account, err := app.Db.CreateAccount(account.UserID, account.Balance)
 		if err != nil {
@@ -39,7 +48,10 @@ func (app *App) CreateAccount() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(account)
+		if err := json.NewEncoder(w).Encode(account); err != nil {
+			http.Error(w, "Could not encode account data", http.StatusInternalServerError)
+			return
+		}
 
 		log.Printf("created new account: %d", account.ID)
 	}
@@ -50,7 +62,10 @@ func (app *App) CreateAccount() http.HandlerFunc {
 func (app *App) CreateTransaction() http.HandlerFunc {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		var transaction db.Transaction
-		json.NewDecoder(r.Body).Decode(&transaction)
+		if err := json.NewDecoder(r.Body).Decode(&transaction); err != nil {
+			http.Error(w, "Could not decode transaction data", http.StatusBadRequest)
+			return
+		}
 
 		transaction, err := app.Db.CreateTransaction(transaction.FromAccountID, transaction.ToAccountID, transaction.Amount)
 		if err != nil {
@@ -63,7 +78,10 @@ func (app *App) CreateTransaction() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(transaction)
+		if err := json.NewEncoder(w).Encode(transaction); err != nil {
+			http.Error(w, "Could not encode transaction data", http.StatusInternalServerError)
+			return
+		}
 
 		log.Printf("created new transaction: %d", transaction.ID)
 	}
@@ -82,7 +100,10 @@ func (app *App) GetUser() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(user)
+		if err := json.NewEncoder(w).Encode(user); err != nil {
+			http.Error(w, "Could not encode user data", http.StatusInternalServerError)
+			return
+		}
 
 		log.Printf("read user %d", user.ID)
 	}
@@ -101,7 +122,10 @@ func (app *App) GetAccounts() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(accounts)
+		if err := json.NewEncoder(w).Encode(accounts); err != nil {
+			http.Error(w, "Could not encode account data", http.StatusInternalServerError)
+			return
+		}
 
 		log.Printf("read accounts of user %s", userId)
 	}
@@ -120,7 +144,10 @@ func (app *App) GetInTransactions() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(transactions)
+		if err := json.NewEncoder(w).Encode(transactions); err != nil {
+			http.Error(w, "Could not encode transaction data", http.StatusInternalServerError)
+			return
+		}
 
 		log.Printf("read incoming transactions for user %s", userId)
 	}
@@ -139,7 +166,10 @@ func (app *App) GetOutTransactions() http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(w).Encode(transactions)
+		if err := json.NewEncoder(w).Encode(transactions); err != nil {
+			http.Error(w, "Could not encode transaction data", http.StatusInternalServerError)
+			return
+		}
 
 		log.Printf("read outgoing transactions for user %s", userId)
 	}

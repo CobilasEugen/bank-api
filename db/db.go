@@ -21,14 +21,14 @@ type SQLiteDb struct {
 
 func NewSQLiteDb() (SQLiteDb, error) {
 	db := SQLiteDb{}
-	if err := db.InitDatabase(); err != nil {
+	if err := db.init(); err != nil {
 		return db, err
 	}
 
 	return db, nil
 }
 
-func (sqlite *SQLiteDb) InitDatabase() error {
+func (sqlite *SQLiteDb) init() error {
 	if sqlite.client == nil {
 		var err error
 		sqlite.client, err = sql.Open("sqlite3", "./bank.db")
@@ -82,9 +82,11 @@ func (sqlite *SQLiteDb) createTables() {
 }
 
 func (sqlite *SQLiteDb) CreateUser(userName string) (User, error) {
-	sqlite.InitDatabase()
-	var user User
+	if err := sqlite.init(); err != nil {
+		return User{}, err
+	}
 
+	var user User
 	result, err := sqlite.client.Exec("INSERT INTO users (name) VALUES (?)", userName)
 	if err != nil {
 		return user, err
@@ -102,9 +104,11 @@ func (sqlite *SQLiteDb) CreateUser(userName string) (User, error) {
 }
 
 func (sqlite *SQLiteDb) CreateAccount(userId int, balance float64) (Account, error) {
-	sqlite.InitDatabase()
-	var account Account
+	if err := sqlite.init(); err != nil {
+		return Account{}, err
+	}
 
+	var account Account
 	result, err := sqlite.client.Exec("INSERT INTO accounts (user_id, balance) VALUES (?, ?)", userId, balance)
 	if err != nil {
 		return account, err
@@ -123,9 +127,11 @@ func (sqlite *SQLiteDb) CreateAccount(userId int, balance float64) (Account, err
 }
 
 func (sqlite *SQLiteDb) CreateTransaction(fromAccountId int, toAccountId int, amount float64) (Transaction, error) {
-	sqlite.InitDatabase()
-	var transaction Transaction
+	if err := sqlite.init(); err != nil {
+		return Transaction{}, err
+	}
 
+	var transaction Transaction
 	user, err := sqlite.GetUserByAccountId(fromAccountId)
 	if err != nil {
 		return transaction, err
@@ -155,14 +161,14 @@ func (sqlite *SQLiteDb) CreateTransaction(fromAccountId int, toAccountId int, am
 	var fromBalance float64
 	err = tx.QueryRow("SELECT balance FROM accounts WHERE id = ?", fromAccountId).Scan(&fromBalance)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return transaction, err
 	}
 
 	var toBalance float64
 	err = tx.QueryRow("SELECT balance FROM accounts WHERE id = ?", toAccountId).Scan(&toBalance)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return transaction, err
 	}
 
@@ -176,7 +182,7 @@ func (sqlite *SQLiteDb) CreateTransaction(fromAccountId int, toAccountId int, am
 	if transactionSucceeded == 1 {
 		_, err = tx.Exec("UPDATE accounts SET balance = ? WHERE id = ?", newFromBalance, fromAccountId)
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return transaction, err
 		}
 	}
@@ -184,14 +190,14 @@ func (sqlite *SQLiteDb) CreateTransaction(fromAccountId int, toAccountId int, am
 	if transactionSucceeded == 1 {
 		_, err = tx.Exec("UPDATE accounts SET balance = ? WHERE id = ?", newToBalance, toAccountId)
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return transaction, err
 		}
 	}
 
 	result, err := tx.Exec("INSERT INTO transactions (from_account_id, to_account_id, amount, timestamp, succeeded) VALUES (?, ?, ?, ?, ?)", fromAccountId, toAccountId, amount, time.Now(), transactionSucceeded)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return transaction, err
 	}
 
@@ -216,7 +222,10 @@ func (sqlite *SQLiteDb) CreateTransaction(fromAccountId int, toAccountId int, am
 }
 
 func (sqlite *SQLiteDb) GetUser(userId string) (User, error) {
-	sqlite.InitDatabase()
+	if err := sqlite.init(); err != nil {
+		return User{}, err
+	}
+
 	var user User
 	err := sqlite.client.QueryRow("SELECT id, name FROM users WHERE id = ?", userId).Scan(&user.ID, &user.Name)
 	if err != nil {
@@ -230,7 +239,10 @@ func (sqlite *SQLiteDb) GetUser(userId string) (User, error) {
 }
 
 func (sqlite *SQLiteDb) GetUserByAccountId(accountId int) (User, error) {
-	sqlite.InitDatabase()
+	if err := sqlite.init(); err != nil {
+		return User{}, err
+	}
+
 	var user User
 
 	query := `
@@ -249,7 +261,10 @@ func (sqlite *SQLiteDb) GetUserByAccountId(accountId int) (User, error) {
 }
 
 func (sqlite *SQLiteDb) GetAccounts(userId string) ([]Account, error) {
-	sqlite.InitDatabase()
+	if err := sqlite.init(); err != nil {
+		return nil, err
+	}
+
 	accounts := []Account{}
 
 	rows, err := sqlite.client.Query("SELECT id, user_id, balance FROM accounts WHERE user_id = ?", userId)
@@ -277,9 +292,11 @@ func (sqlite *SQLiteDb) GetAccounts(userId string) ([]Account, error) {
 // incoming is true to get all transactions into the account
 // incoming is false to get all transactions out of the account (outgoing transactions)
 func (sqlite *SQLiteDb) GetTransactions(userId string, incoming bool) ([]Transaction, error) {
-	sqlite.InitDatabase()
-	transactions := []Transaction{}
+	if err := sqlite.init(); err != nil {
+		return nil, err
+	}
 
+	transactions := []Transaction{}
 	accounts, err := sqlite.GetAccounts(userId)
 	if err != nil {
 		return transactions, err

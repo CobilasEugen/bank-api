@@ -13,14 +13,14 @@ type MockDb struct {
 
 func NewMockDb() (MockDb, error) {
 	db := MockDb{}
-	if err := db.InitDatabase(); err != nil {
+	if err := db.init(); err != nil {
 		return db, err
 	}
 
 	return db, nil
 }
 
-func (mock *MockDb) InitDatabase() error {
+func (mock *MockDb) init() error {
 	mock.users = []User{
 		{ID: 0, Name: "Alice"},
 		{ID: 1, Name: "Bob"},
@@ -44,10 +44,6 @@ func (mock *MockDb) InitDatabase() error {
 	}
 
 	return nil
-}
-
-func (mock *MockDb) createTables() {
-	mock.InitDatabase()
 }
 
 func (mock *MockDb) CreateUser(userName string) (User, error) {
